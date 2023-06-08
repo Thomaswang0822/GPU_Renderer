@@ -1,83 +1,61 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.21)
+project(GPU_Renderer LANGUAGES CUDA)
 
-project(lajolla)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_ARCHITECTURES "86")
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Collect all source files from src/ directory
+file(GLOB_RECURSE SRC_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu
+)
 
-set(CMAKE_BUILD_TYPE RelWithDebInfo)
+# Collect all header files from include/ directory
+file(GLOB_RECURSE HEADER_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+)
 
-if(MSVC)
-  add_compile_options(/Wall /Wno-unknown-pragmas)
-else()
-  add_compile_options(-Wall -Wno-unknown-pragmas)
-endif()
+add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 
-include_directories(${CMAKE_SOURCE_DIR}/src)
+# Set include directories
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(SRCS src/3rdparty/miniz.h
-         src/3rdparty/miniz.c
-         src/3rdparty/pugiconfig.hpp
-         src/3rdparty/pugixml.hpp
-         src/3rdparty/pugixml.cpp
-         src/3rdparty/stb_image.h
-         src/3rdparty/tinyexr.h
-         src/3rdparty/tinyply.h
-         src/compute_normals.h
-         src/flexception.h
-         src/hw1.h
-         src/hw1_scenes.h
-         src/hw2.h
-         src/hw3.h
-         src/hw4.h
-         src/image.h
-         src/matrix.h
-         src/parallel.h
-         src/parse_obj.h
-         src/parse_ply.h
-         src/parse_scene.h
-         src/parse_serialized.h
-         src/print_scene.h
-         src/torrey.h
-         src/transform.h
-         src/vector.h
-         src/ray.h
-         src/pcg.h
-         src/Scene.h
-         src/material.h
-         src/BVH_node.h
-         src/helper.h
-         src/all_utils.h
-         src/Hit_Record.h
-         src/compute_radiance.h
-         src/compute_normals.cpp
-         src/hw1.cpp
-         src/hw2.cpp
-         src/hw2_helper.cpp
-         src/hw3.cpp
-         src/hw4.cpp
-         src/image.cpp
-         src/main.cpp
-         src/parallel.cpp
-         src/parse_obj.cpp
-         src/parse_ply.cpp
-         src/parse_scene.cpp
-         src/parse_serialized.cpp
-         src/print_scene.cpp
-         src/transform.cpp
-         src/Scene.cpp
-         src/BVH_node.cpp
-         src/helper.cpp
-         src/compute_radiance.cpp
-    )
+# Set the language for CUDA source files
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu PROPERTIES LANGUAGE CUDA)
 
-add_library(torrey_lib STATIC ${SRCS})
-add_executable(torrey src/main.cpp)
+set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-target_link_libraries(torrey Threads::Threads)
+# Generate out.ppm
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/out.ppm
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} > ${CMAKE_CURRENT_BINARY_DIR}/out.ppm
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-target_link_libraries(torrey torrey_lib)
+add_custom_target(out_ppm
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/out.ppm
+)
+
+
+# Generate out.jpg
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/out.jpg
+    COMMAND ppmtojpeg ${CMAKE_CURRENT_BINARY_DIR}/out.ppm > ${CMAKE_CURRENT_BINARY_DIR}/out.jpg
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/out.ppm
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+add_custom_target(out_jpg
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/out.jpg
+)
+
+# clean target
+add_custom_target(clean_build
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/out.ppm
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/out.jpg
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
