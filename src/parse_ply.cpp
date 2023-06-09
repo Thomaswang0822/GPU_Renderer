@@ -1,10 +1,7 @@
 #include "parse_ply.h"
-#include "flexception.h"
-#include "transform.h"
 #define TINYPLY_IMPLEMENTATION
 #include "3rdparty/tinyply.h"
 
-#include <fstream>
 
 ParsedTriangleMesh parse_ply(const fs::path &filename, const Matrix4x4 &to_world) {
     std::ifstream ifs(filename, std::ios::binary);

@@ -24,7 +24,7 @@
 // numerical accuracy as much when we render.
 // Switching to floating point computation is easy --
 // just set Real = float.
-using Real = double;
+using Real = float;
 
 // Lots of PIs!
 const Real c_PI = Real(3.14159265358979323846);
@@ -40,7 +40,7 @@ const unsigned int MAX_DEPTH = 50;    // maximum recursion depth
 const Real EPSILON = 1e-7;
 
 template <typename T>
-inline T infinity() {
+__device__ inline T infinity() {
     return std::numeric_limits<T>::infinity();
 }
 
