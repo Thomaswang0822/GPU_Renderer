@@ -8,12 +8,12 @@ struct Hit_Record {
     Vector3 normal;
     int mat_id;
     Real dist;  // hit distance
-    double u, v;  // uv coordinate of hit point local to hit obj
+    Real u, v;  // uv coordinate of hit point local to hit obj
     bool front_face;
 
     // Default constructor: set hitDist = infinity
     __device__ Hit_Record() : 
-    dist(infinity<Real>()) {}
+    dist(c_INFINITY) {}
 
     __device__ inline void set_face_normal(const ray& r, const Vector3& outward_normal) {
         front_face = dot(r.dir, outward_normal) < 0;

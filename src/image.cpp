@@ -12,7 +12,7 @@ using std::string;
 using std::vector;
 
 // Stolen from https://github.com/halide/Halide/blob/c6529edb23b9fab8b406b28a4f9ea05b08f81cfe/src/Util.cpp#L253
-inline bool ends_with(const string &str, const string &suffix) {
+__host__ __device__ inline bool ends_with(const string &str, const string &suffix) {
     if (str.size() < suffix.size()) {
         return false;
     }
@@ -25,7 +25,7 @@ inline bool ends_with(const string &str, const string &suffix) {
     return true;
 }
 
-Image1 imread1(const fs::path &filename) {
+__host__ __device__ Image1 imread1(const fs::path &filename) {
     Image1 img;
     std::string extension = to_lowercase(filename.extension().string());
     // JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC
@@ -77,7 +77,7 @@ Image1 imread1(const fs::path &filename) {
     return img;
 }
 
-Image3 imread3(const fs::path &filename) {
+__host__ __device__ Image3 imread3(const fs::path &filename) {
     Image3 img;
     std::string extension = to_lowercase(filename.extension().string());
     // JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC
@@ -132,7 +132,7 @@ Image3 imread3(const fs::path &filename) {
     return img;
 }
 
-void imwrite(const fs::path &filename, const Image3 &image) {
+__host__ __device__ void imwrite(const fs::path &filename, const Image3 &image) {
     if (image.data.empty()) {
         return;
     }

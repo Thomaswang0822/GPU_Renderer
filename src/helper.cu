@@ -19,8 +19,8 @@ void checkRaySphereHit(ray localRay,
         return;
     } else {
         // minus because we want the closer hitting point -> smaller t
-        double smallerRoot = (-half_b - sqrt(discriminant) ) / a;
-        double biggerRoot = (-half_b + sqrt(discriminant) ) / a;
+        Real smallerRoot = (-half_b - sqrt(discriminant) ) / a;
+        Real biggerRoot = (-half_b + sqrt(discriminant) ) / a;
 
         // 1st hit too close, check 2nd hit: useful when Ray can travel inside Object
         if (smallerRoot < EPSILON) {
@@ -155,33 +155,33 @@ Vector3 Triangle_sample(const Triangle* tri, pcg32_state& rng, int which_part) {
         {
         case 0:
             p0 = tri->p0;
-            p1 = 0.5 * (p0 + tri->p1);
-            p2 = 0.5 * (p0 + tri->p2);
+            p1 = 0.5f * (p0 + tri->p1);
+            p2 = 0.5f * (p0 + tri->p2);
             break;
         case 1:
             p1 = tri->p1;
-            p0 = 0.5 * (p1 + tri->p0);
-            p2 = 0.5 * (p1 + tri->p2);
+            p0 = 0.5f * (p1 + tri->p0);
+            p2 = 0.5f * (p1 + tri->p2);
             break;
         case 2:
             p2 = tri->p2;
-            p0 = 0.5 * (p2 + tri->p0);
-            p1 = 0.5 * (p2 + tri->p1);
+            p0 = 0.5f * (p2 + tri->p0);
+            p1 = 0.5f * (p2 + tri->p1);
             break;
         case 3:
             // all 3 are mid points, vertex order is flipped and but when don't
             // deal with normal, so no problem
-            p0 = 0.5 * (tri->p1 + tri->p2);
-            p1 = 0.5 * (tri->p0 + tri->p2);
-            p2 = 0.5 * (tri->p0 + tri->p1);
+            p0 = 0.5f * (tri->p1 + tri->p2);
+            p1 = 0.5f * (tri->p0 + tri->p2);
+            p2 = 0.5f * (tri->p0 + tri->p1);
             break;
         default:
-            Error("Wrong Triangle stratification index. Should be 0 to 3")
+            assert(false && "Wrong Triangle stratification index. Should be 0 to 3");
             break;
         }
         // use baryC on this sub-Triangle;
         return Vector3(
-            (1-b1-b2) * p0 +
+            (1.f-b1-b2) * p0 +
             b1 * p1 + 
             b2 * p2
         );
@@ -205,7 +205,7 @@ Vector3 SphTri_sample(Triangle* tri, pcg32_state& rng, Hit_Record& rec)
     if (hitObj == nullptr) {
         // above function fails, meaning tri.normal is perpendicular to xp
         // just return tri angle center. visibility check will make contribution to 0
-        return (tri->p0 + tri->p1 + tri->p2) / 3.0;
+        return (tri->p0 + tri->p1 + tri->p2) / 3.0f;
     }
     /* Triangle* tri1 = get_if<Triangle>(hitObj);
     if (tri1->face_id != tri->face_id)
@@ -220,9 +220,9 @@ Vector3 Sphere_sample(const Sphere* sph, pcg32_state& rng, int idx, int ct) {
     Real u1 = next_pcg32_real<Real>(rng);
     Real u2 = next_pcg32_real<Real>(rng);
     // elevation angle theta; azumith angle phi
-    double theta = acos(1.0 - 2 * u1);
+    Real theta = acos(1.0 - 2 * u1);
     // for stratified sample: offset to the particular "orange slice".
-    double phi = c_TWOPI * (u2 + Real(idx)/ ct);
+    Real phi = c_TWOPI * (u2 + Real(idx)/ ct);
 
     // convert sphercial coor to xyz position
     // c + r (sin θ cos φ,sin θ sin φ, cos θ).
@@ -241,8 +241,8 @@ Vector3 Sphere_sample_cone(const Sphere* sph, pcg32_state& rng,
     Real u1 = next_pcg32_real<Real>(rng);
     Real u2 = next_pcg32_real<Real>(rng);
     // elevation angle theta; azumith angle phi
-    double theta = acos(1.0 - u1 * (1.0 - cos_theta_max));
-    double phi = c_TWOPI * u2;
+    Real theta = acos(1.0 - u1 * (1.0 - cos_theta_max));
+    Real phi = c_TWOPI * u2;
 
     // This is the point under the Sphere local space
     // i.e. center at 0, up vector is (0,1,0)
@@ -277,14 +277,14 @@ Vector3 areaLight_contribution(const Shape* lightObj, Hit_Record& rec,
     // nx also, but it depend on Sphere/Triangle, so we handle it outside.
 
     return (Kd * I * c_INVPI / dsq) // const
-        * std::max(dot(rec.normal, l), 0.0) // max (ns · l, 0)
-        * std::max(dot(-nx, l), 0.0);  // max (−nx · l, 0)
+        * std::max(dot(rec.normal, l), 0.f) // max (ns · l, 0)
+        * std::max(dot(-nx, l), 0.f);  // max (−nx · l, 0)
 }
 
 
 Vector3 dir_cos_sample(pcg32_state& rng, Basis& basis) {
-    double u1 = next_pcg32_real<double>(rng);
-    double u2 = next_pcg32_real<double>(rng);
+    Real u1 = next_pcg32_real<Real>(rng);
+    Real u2 = next_pcg32_real<Real>(rng);
 
     Real z = sqrt(1.0 - u2);  // also cos(theta)
     Real phi = c_TWOPI * u1;
@@ -298,8 +298,8 @@ Vector3 dir_cos_sample(pcg32_state& rng, Basis& basis) {
 
 
 Vector3 dir_Phong_sample(pcg32_state& rng, Basis& basis, Real alpha) {
-    double u1 = next_pcg32_real<double>(rng);
-    double u2 = next_pcg32_real<double>(rng);
+    Real u1 = next_pcg32_real<Real>(rng);
+    Real u2 = next_pcg32_real<Real>(rng);
 
     Real phi = c_TWOPI * u2;
     Real cos_theta = pow(1.0-u1, 1.0/(alpha+1.0));  // derived in quiz problem
@@ -317,8 +317,8 @@ Vector3 dir_Phong_sample(pcg32_state& rng, Basis& basis, Real alpha) {
 
 
 Vector3 dir_GGX_sample(pcg32_state& rng, Basis& basis, Real exponent) {
-    double u1 = next_pcg32_real<double>(rng);
-    double u2 = next_pcg32_real<double>(rng);
+    Real u1 = next_pcg32_real<Real>(rng);
+    Real u2 = next_pcg32_real<Real>(rng);
 
     Real phi = c_TWOPI * u2;
 

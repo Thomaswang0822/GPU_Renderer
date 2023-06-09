@@ -68,7 +68,7 @@ Scene::Scene(const ParsedScene &scene) :
             shape_id_map.push_back(currIdx);
             currIdx += nTri;
         } else {
-            Error("Not Sphere or TriangleMesh.");
+            assert(false && "Not Sphere or TriangleMesh.");
         }
     }
 
@@ -83,7 +83,7 @@ Scene::Scene(const ParsedScene &scene) :
                 materials.push_back(Diffuse{get<ParsedImageTexture>(diffuse->reflectance)});
             }
             else {
-                Error("Diffuse: not Vector3 or ImageTexture.");
+                assert(false && "Diffuse: not Vector3 or ImageTexture.");
             }    
         } else if (auto *mirror = get_if<ParsedMirror>(&parsed_mat)) {
             if (get_if<Vector3>(&mirror->reflectance)) {
@@ -93,7 +93,7 @@ Scene::Scene(const ParsedScene &scene) :
                 materials.push_back(Mirror{get<ParsedImageTexture>(mirror->reflectance)});
             }
             else {
-                Error("Mirror: not Vector3 or ImageTexture.");
+                assert(false && "Mirror: not Vector3 or ImageTexture.");
             }
         } else if (auto *plastic = get_if<ParsedPlastic>(&parsed_mat)) {
             if (get_if<Vector3>(&plastic->reflectance)) {
@@ -107,7 +107,7 @@ Scene::Scene(const ParsedScene &scene) :
                 );
             }
             else {
-                Error("Plastic: not Vector3 or ImageTexture.");
+                assert(false && "Plastic: not Vector3 or ImageTexture.");
             }
         } else if (auto *phong = get_if<ParsedPhong>(&parsed_mat)) {
             if (get_if<Vector3>(&phong->reflectance)) {
@@ -121,7 +121,7 @@ Scene::Scene(const ParsedScene &scene) :
                 );
             }
             else {
-                Error("Phong reflectance: not Vector3 or ImageTexture.");
+                assert(false && "Phong reflectance: not Vector3 or ImageTexture.");
             }
         } else if (auto *blph = get_if<ParsedBlinnPhong>(&parsed_mat)) {
             if (get_if<Vector3>(&blph->reflectance)) {
@@ -135,7 +135,7 @@ Scene::Scene(const ParsedScene &scene) :
                 );
             }
             else {
-                Error("BlinnPhong reflectance: not Vector3 or ImageTexture.");
+                assert(false && "BlinnPhong reflectance: not Vector3 or ImageTexture.");
             }
         }
         else if (auto *blph_m = get_if<ParsedBlinnPhongMicrofacet>(&parsed_mat)) {
@@ -151,12 +151,12 @@ Scene::Scene(const ParsedScene &scene) :
                 );
             }
             else {
-                Error("Microfacet reflectance: not Vector3 or ImageTexture.");
+                assert(false && "Microfacet reflectance: not Vector3 or ImageTexture.");
             }
         }
         
         else {
-            Error("Material not implemented yet.");
+            assert(false && "Material not implemented yet.");
         }
     }
     // Copy the lights

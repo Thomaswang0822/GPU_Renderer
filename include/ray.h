@@ -63,7 +63,7 @@ __device__ inline ray refract_ray(ray &rayIn, Vector3 outNormal, Vector3 &hitPt,
 {
     float cos_theta = dot(-rayIn.dir, outNormal);
     Vector3 r_out_perp = eta_ratio * (rayIn.dir + cos_theta * outNormal);
-    Vector3 r_out_parallel = -sqrt(fabs(1.0f - length_squared(r_out_perp))) * outNormal;
+    Vector3 r_out_parallel = -sqrtf(fabs(1.0f - length_squared(r_out_perp))) * outNormal;
     return ray(
         hitPt,
         r_out_perp + r_out_parallel // constructor will take care of normalize()

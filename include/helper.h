@@ -62,9 +62,9 @@ struct Basis {
  */
 struct SphTriangle {
     Vector3 A,B,C;  // vertices
-    double area;
-    double alpha, beta, gamma;  // internal angles
-    double a,b,c;  // edge lengths
+    Real area;
+    Real alpha, beta, gamma;  // internal angles
+    Real a,b,c;  // edge lengths
 
     SphTriangle(const Triangle* tri, Vector3 center) {
         // Find vertices
@@ -131,11 +131,11 @@ struct SphTriangle {
             ((v * s + u * t) * sin(alpha));  // denominator
         // Compute the third vertex of the sub-triangle
         // [x | y] = normalize(x - <x, y>*y)
-        Vector3 C_hat = q * A + sqrt(1.0 - q*q) * normalize(C - dot(C, A)*A);
+        Vector3 C_hat = q * A + sqrt(1.f - q*q) * normalize(C - dot(C, A)*A);
         // Use the other random variable to select cos_theta
-        Real z = 1.0 - r2 * (1.0 - dot(C_hat, B));
+        Real z = 1.0 - r2 * (1.f - dot(C_hat, B));
         // Construct the corresponding position on the sphere
-        Vector3 P = z * B + sqrt(1.0 - z*z) * normalize(C_hat - dot(C_hat, B) * B);
+        Vector3 P = z * B + sqrt(1.f - z*z) * normalize(C_hat - dot(C_hat, B) * B);
         return P;
     }
 };

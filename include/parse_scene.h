@@ -2,6 +2,7 @@
 
 #include "utils.h"
 #include "vector.h"
+#include "image.h"
 
 #include <filesystem>
 #include <variant>
@@ -16,9 +17,13 @@ struct ParsedCamera {
 };
 
 struct ParsedImageTexture {
-    fs::path filename;
+    Image3 img3;
     Real uscale = 1, vscale = 1;
     Real uoffset = 0, voffset = 0;
+
+    ParsedImageTexture(fs::path fname, Real us, Real vs, Real uo, Real vo)
+        : uscale(us), vscale(vs), uoffset(uo), voffset(vo),
+        img3(imread3(fname)) {}
 };
 
 using ParsedColor = std::variant<Vector3 /* RGB */, ParsedImageTexture>;

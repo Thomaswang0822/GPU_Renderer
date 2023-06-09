@@ -1,11 +1,9 @@
 #include "parse_scene.h"
 #include "3rdparty/pugixml.hpp"
-#include "compute_normals.h"
-#include "flexception.h"
+#include "all_utils.h"
 #include "parse_obj.h"
 #include "parse_ply.h"
 #include "parse_serialized.h"
-#include "transform.h"
 #include <map>
 #include <regex>
 #include <vector>
@@ -420,8 +418,8 @@ ParsedColor parse_texture(pugi::xml_node node,
         if (path.is_relative()) {
             path = fs::current_path() / path;
         }
-        return ParsedImageTexture{path,
-            uscale, vscale, uoffset, voffset};
+        return ParsedImageTexture(path,
+            uscale, vscale, uoffset, voffset);
     }
     Error(std::string("Unknown texture type: ") + type);
     return ParsedColor{};

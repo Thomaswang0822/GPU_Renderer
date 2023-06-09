@@ -130,7 +130,7 @@ BVH_node::BVH_node(std::vector<std::shared_ptr<Shape>>& objects,
 
 
 Vector3 axisRange(const vector<shared_ptr<Shape>>& src_objects, size_t start, size_t end) {
-    Vector3 resMin(infinity<Real>(), infinity<Real>(), infinity<Real>());
+    Vector3 resMin(c_INFINITY, c_INFINITY, c_INFINITY);
     Vector3 resMax(-resMin);
 
     Shape* shapePtr = nullptr;

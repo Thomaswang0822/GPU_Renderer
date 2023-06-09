@@ -17,10 +17,10 @@ using namespace std;
  *   from all lights in the scene.
  * @note used BEFORE path tracing (hw_4_1)
  * 
- * @param refl Color of the diffuse material at shading point
+ * @param refl MatColor of the diffuse material at shading point
  * @return Vector3 
  */
-Vector3 BVH_DiffuseColor(Scene& scene, Hit_Record& rec, const Color& refl, 
+Vector3 BVH_DiffuseColor(Scene& scene, Hit_Record& rec, const MatColor& refl, 
                         BVH_node& root, const Shape* hitObj, pcg32_state& rng);
 
 /**
@@ -212,9 +212,9 @@ inline bool closeToZero(Real x) {
  * @ref https://stackoverflow.com/a/596243
  * 
  * @param rgb 
- * @return double 
+ * @return Real 
  */
-inline double Luminance(Vector3& rgb) {
+inline Real Luminance(Vector3& rgb) {
     return 0.2126*rgb.x + 0.7152*rgb.y + 0.0722*rgb.z;
 }
 
