@@ -97,7 +97,7 @@ I will paste the docstring of relevant functions below. Implementation details a
 Vector3 meshLight_total_contribution(Scene& scene, Hit_Record& rec, BVH_node& root,
             int mesh_id, int shape_id,
             const Vector3& Kd, const Vector3& I,
-            pcg32_state& rng, 
+            curandState& rng, 
             bool sampleAll=true, int maxSample=64,
             bool stratified=false);
 ```

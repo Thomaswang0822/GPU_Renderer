@@ -1,4 +1,4 @@
-# Header Files to Change
+# Files to Change
 
 - [X] all_utils.h
 - [ ] BVH_node.h
@@ -16,7 +16,7 @@
 - [X] parse_ply.h
 - [X] parse_scene.h
 - [X] parse_serialized.h
-- [ ] pcg.h
+- [X] pcg.h
 - [X] print_scene.h
 - [X] progressreporter.h
 - [X] ray.h

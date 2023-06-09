@@ -4,7 +4,7 @@ using namespace std;
 
 // HW3 Update: deal with ImageTexture Color & Area light
 Vector3 BVH_DiffuseColor(Scene& scene, Hit_Record& rec, const Color& refl, 
-        BVH_node& root, const Shape* hitObj, pcg32_state& rng)
+        BVH_node& root, const Shape* hitObj, curandState& rng)
 {
     Vector3 result = Vector3(0.f, 0.f, 0.f);
 
@@ -66,7 +66,7 @@ Vector3 BVH_DiffuseColor(Scene& scene, Hit_Record& rec, const Color& refl,
 
 // HW4_2 Update: can deal with BRDF sampling of all materials
 Vector3 BVH_PixelColor(Scene& scene, ray& localRay, BVH_node& root, 
-        pcg32_state& rng, unsigned int recDepth) {
+        curandState& rng, unsigned int recDepth) {
     // Step 1 BVH UPDATE: detect hit. 
     Hit_Record rec;
     Shape* hitObj = nullptr;
@@ -139,7 +139,7 @@ Vector3 BVH_PixelColor(Scene& scene, ray& localRay, BVH_node& root,
 
         // HW4 UPDATE: instead of tracing both,
         // we decide between specular and diffuse with Stochastic Probability F vs (1-F)
-        bool traceSpecular = next_pcg32_real<Real>(rng) < F;
+        bool traceSpecular = curand_uniform(&rng) < F;
         if (traceSpecular) {
             return L_emmision + BVH_PixelColor(scene, rayOut, root, rng, recDepth-1);
         } else {
@@ -250,7 +250,7 @@ Vector3 BVH_PixelColor(Scene& scene, ray& localRay, BVH_node& root,
 Vector3 meshLight_total_contribution(Scene& scene, Hit_Record& rec, BVH_node& root,
             int mesh_id, int shape_id,
             const Vector3& Kd, const Vector3& I,
-            pcg32_state& rng, 
+            curandState& rng, 
             bool sampleAll, int maxSample, 
             bool stratified) 
 {
@@ -278,7 +278,7 @@ Vector3 meshLight_total_contribution(Scene& scene, Hit_Record& rec, BVH_node& ro
             light_tri = &scene.shapes[shape_id + local_i];
         } else {
             // sample certain triangle from the cdf
-            local_idx = scene.meshes[mesh_id].which_tri(next_pcg32_real<Real>(rng));
+            local_idx = scene.meshes[mesh_id].which_tri(curand_uniform(&rng));
             light_tri = &scene.shapes[shape_id + local_idx];
         }
         tri = get_if<Triangle>(light_tri);
@@ -312,7 +312,7 @@ Vector3 meshLight_total_contribution(Scene& scene, Hit_Record& rec, BVH_node& ro
 Vector3 sphereLight_contribution(Scene& scene, Hit_Record& rec, BVH_node& root,
             const Shape* lightObj, 
             const Vector3& Kd, const Vector3& I,
-            pcg32_state& rng, 
+            curandState& rng, 
             int ct)
 {
     Vector3 total(0.f, 0.f, 0.f);  // return value
@@ -349,7 +349,7 @@ Vector3 sphereLight_contribution(Scene& scene, Hit_Record& rec, BVH_node& root,
 #pragma region PATH_TRACING  // HW4_3
 
 Vector3 radiance(Scene& scene, ray& localRay, BVH_node& root, 
-        pcg32_state& rng, unsigned int recDepth) {
+        curandState& rng, unsigned int recDepth) {
 
     // Step 0: end if reaching recursion depth
     if (recDepth == 0) {
@@ -396,7 +396,7 @@ Vector3 radiance(Scene& scene, ray& localRay, BVH_node& root,
      */
     #pragma region one_sample_MIS
     // flip a coin
-    bool pickLight = next_pcg32_real<Real>(rng) <= 0.5;
+    bool pickLight = curand_uniform(&rng) <= 0.5;
     Vector3 out_dir, brdfValue;
     Real brdf_PDF, light_PDF;
     Vector3 in_dir = -localRay.dir;
@@ -423,7 +423,7 @@ Vector3 radiance(Scene& scene, ray& localRay, BVH_node& root,
 
             // decide between mirror-like and diffuse-like
             Real F = compute_SchlickFresnel(plasticMat->get_F0(), cos_theta);
-            if (next_pcg32_real<Real>(rng) < F) {
+            if (curand_uniform(&rng) < F) {
                 // We only consider specular component in BRDF sampling, 50% of time
                 return 2.f * radiance(scene, rayOut, root, rng, recDepth=recDepth-1);
             }
@@ -460,7 +460,7 @@ Vector3 radiance(Scene& scene, ray& localRay, BVH_node& root,
 
 
 Sample BRDF_sample_dir(Material& currMaterial, Hit_Record& rec, 
-            pcg32_state& rng, const Vector3& in_dir)
+            curandState& rng, const Vector3& in_dir)
 {
     // our return values
     Vector3 out_dir, brdfValue;
@@ -486,7 +486,7 @@ Sample BRDF_sample_dir(Material& currMaterial, Hit_Record& rec,
         // compute F, but specular case is handled outside
         Real cos_theta = dot(rec.normal, in_dir);
         Real F = compute_SchlickFresnel(plasticMat->get_F0(), cos_theta);
-        if (next_pcg32_real<Real>(rng) < F) {
+        if (curand_uniform(&rng) < F) {
             Vector3 mir_dir = mirror_dir(in_dir, rec.normal);
             // We only consider specular component in BRDF sampling, 50% of time
             return {mir_dir, {1.f, 1.f, 1.f}, 1.f, 1.f};
@@ -578,7 +578,7 @@ Sample BRDF_sample_dir(Material& currMaterial, Hit_Record& rec,
 
 
 Sample Light_sample_dir(Scene& scene, Hit_Record& rec, BVH_node& root,
-            Material& currMaterial, pcg32_state& rng, const Vector3& in_dir,
+            Material& currMaterial, curandState& rng, const Vector3& in_dir,
             int given_id)
 {
     // our return values
@@ -594,7 +594,7 @@ Sample Light_sample_dir(Scene& scene, Hit_Record& rec, BVH_node& root,
     // uniformly pick a light OR use the given light
     int n = scene.lights.size();
     int lightId = (given_id == -1)?
-        static_cast<int>(n * next_pcg32_real<Real>(rng)) : given_id;
+        static_cast<int>(n * curand_uniform(&rng)) : given_id;
     Light& light = scene.lights[lightId];
     assert(!get_if<PointLight>(&light) && "One-sample MIS doesn't support point Light.");
     DiffuseAreaLight* areaLight = get_if<DiffuseAreaLight>(&light);
@@ -632,7 +632,7 @@ Sample Light_sample_dir(Scene& scene, Hit_Record& rec, BVH_node& root,
     } else if (const Triangle* leading_tri = get_if<Triangle>(lightObj)) {
         // pick a Triangle from the mesh
         TriangleMesh& mesh = scene.meshes[leading_tri->mesh_id];
-        int local_idx = mesh.which_tri(next_pcg32_real<Real>(rng));  // index in the mesh
+        int local_idx = mesh.which_tri(curand_uniform(&rng));  // index in the mesh
         // shape_id points to the first (0-th) triangle in the mesh
         Triangle* tri = get_if<Triangle>(&scene.shapes[areaLight->shape_id + local_idx]);
 
@@ -752,7 +752,7 @@ Real alternative_light_pdf(ray& outRay, Scene& scene, BVH_node& root,  // determ
 
 
 Vector3 radiance_iterative(Scene& scene, ray& localRay, BVH_node& root, 
-                        pcg32_state& rng, unsigned int recDepth)
+                        curandState& rng, unsigned int recDepth)
 {
     // Step 0. Init variables
     Vector3 L(0.f, 0.f, 0.f);
@@ -821,7 +821,7 @@ if (bounces > 3) {
     // A minimum termination probability 0.f5 
     // ensures termination is possible even if Beta is large
     Real q = std::max(0.05f, 1.f-Luminance(Beta));
-    if (next_pcg32_real<Real>(rng) < q)
+    if (curand_uniform(&rng) < q)
         break;
     Beta /= 1.f - q;
 }
@@ -834,7 +834,7 @@ if (bounces > 3) {
 
 
 Vector3 sample_oneLight_contribution(Scene& scene, Hit_Record& rec, 
-        BVH_node& root, pcg32_state& rng,
+        BVH_node& root, curandState& rng,
         Material& mat, const Vector3& in_dir)
 {
     // our return values: brdf * L(deterministic) / pdf_light
@@ -847,7 +847,7 @@ Vector3 sample_oneLight_contribution(Scene& scene, Hit_Record& rec,
     // uniformly pick a light, which can be 
     // [point light, Sphere area light, TriangleMesh area light]
     int nLights = scene.lights.size();
-    int pick_id = static_cast<int>(nLights * next_pcg32_real<Real>(rng));
+    int pick_id = static_cast<int>(nLights * curand_uniform(&rng));
     Light& light = scene.lights[pick_id];
 
     // compute accordingly

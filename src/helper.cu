@@ -137,9 +137,9 @@ void checkRaySceneHit(ray localRay,
 }
 
 
-Vector3 Triangle_sample(const Triangle* tri, pcg32_state& rng, int which_part) {
-    Real u1 = next_pcg32_real<Real>(rng);
-    Real u2 = next_pcg32_real<Real>(rng);
+Vector3 Triangle_sample(const Triangle* tri, curandState& rng, int which_part) {
+    Real u1 = curand_uniform(&rng);
+    Real u2 = curand_uniform(&rng);
     Real b1 = 1 - sqrt(u1);
     Real b2 = u2 * sqrt(u1);
     if (which_part == -1) {    
@@ -189,7 +189,7 @@ Vector3 Triangle_sample(const Triangle* tri, pcg32_state& rng, int which_part) {
 }
 
 
-Vector3 SphTri_sample(Triangle* tri, pcg32_state& rng, Hit_Record& rec)
+Vector3 SphTri_sample(Triangle* tri, curandState& rng, Hit_Record& rec)
 {
     // construct the Spherical Triangle
     SphTriangle sphtri(tri, rec.pos);
@@ -216,9 +216,9 @@ Vector3 SphTri_sample(Triangle* tri, pcg32_state& rng, Hit_Record& rec)
 }
 
 
-Vector3 Sphere_sample(const Sphere* sph, pcg32_state& rng, int idx, int ct) {
-    Real u1 = next_pcg32_real<Real>(rng);
-    Real u2 = next_pcg32_real<Real>(rng);
+Vector3 Sphere_sample(const Sphere* sph, curandState& rng, int idx, int ct) {
+    Real u1 = curand_uniform(&rng);
+    Real u2 = curand_uniform(&rng);
     // elevation angle theta; azumith angle phi
     Real theta = acos(1.0 - 2 * u1);
     // for stratified sample: offset to the particular "orange slice".
@@ -234,12 +234,12 @@ Vector3 Sphere_sample(const Sphere* sph, pcg32_state& rng, int idx, int ct) {
 }
 
 
-Vector3 Sphere_sample_cone(const Sphere* sph, pcg32_state& rng, 
+Vector3 Sphere_sample_cone(const Sphere* sph, curandState& rng, 
                 const Real& cos_theta_max, const Vector3& cp) {
     assert(cos_theta_max > 0.0 && cos_theta_max < 1.0 
         && "cos(theta max) should be between 0 and 1.");
-    Real u1 = next_pcg32_real<Real>(rng);
-    Real u2 = next_pcg32_real<Real>(rng);
+    Real u1 = curand_uniform(&rng);
+    Real u2 = curand_uniform(&rng);
     // elevation angle theta; azumith angle phi
     Real theta = acos(1.0 - u1 * (1.0 - cos_theta_max));
     Real phi = c_TWOPI * u2;
@@ -282,9 +282,9 @@ Vector3 areaLight_contribution(const Shape* lightObj, Hit_Record& rec,
 }
 
 
-Vector3 dir_cos_sample(pcg32_state& rng, Basis& basis) {
-    Real u1 = next_pcg32_real<Real>(rng);
-    Real u2 = next_pcg32_real<Real>(rng);
+Vector3 dir_cos_sample(curandState& rng, Basis& basis) {
+    Real u1 = curand_uniform(&rng);
+    Real u2 = curand_uniform(&rng);
 
     Real z = sqrt(1.0 - u2);  // also cos(theta)
     Real phi = c_TWOPI * u1;
@@ -297,9 +297,9 @@ Vector3 dir_cos_sample(pcg32_state& rng, Basis& basis) {
 }
 
 
-Vector3 dir_Phong_sample(pcg32_state& rng, Basis& basis, Real alpha) {
-    Real u1 = next_pcg32_real<Real>(rng);
-    Real u2 = next_pcg32_real<Real>(rng);
+Vector3 dir_Phong_sample(curandState& rng, Basis& basis, Real alpha) {
+    Real u1 = curand_uniform(&rng);
+    Real u2 = curand_uniform(&rng);
 
     Real phi = c_TWOPI * u2;
     Real cos_theta = pow(1.0-u1, 1.0/(alpha+1.0));  // derived in quiz problem
@@ -316,9 +316,9 @@ Vector3 dir_Phong_sample(pcg32_state& rng, Basis& basis, Real alpha) {
 }
 
 
-Vector3 dir_GGX_sample(pcg32_state& rng, Basis& basis, Real exponent) {
-    Real u1 = next_pcg32_real<Real>(rng);
-    Real u2 = next_pcg32_real<Real>(rng);
+Vector3 dir_GGX_sample(curandState& rng, Basis& basis, Real exponent) {
+    Real u1 = curand_uniform(&rng);
+    Real u2 = curand_uniform(&rng);
 
     Real phi = c_TWOPI * u2;
 

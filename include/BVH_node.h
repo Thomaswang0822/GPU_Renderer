@@ -21,11 +21,11 @@ struct BVH_node {
         box = surrounding_box(left.get()->box, right.get()->box);
     }
     // wrapper around constructor below: force BVH for each mesh
-    BVH_node(vector<shared_ptr<Shape>>& objects, Scene& scene, pcg32_state &rng);
+    BVH_node(vector<shared_ptr<Shape>>& objects, Scene& scene, curandState &rng);
     // top-level recursive constructor
     BVH_node(vector<shared_ptr<Shape>>& objects,
         size_t start, size_t end,  // index
-        pcg32_state &rng, bool randomAxis=true  // to pick random axis
+        curandState &rng, bool randomAxis=true  // to pick random axis
     );
     /***DEBUG NOTE
      * Instead of a vector<Shape>&, we need to pass in a vector<shared_ptr<Shape>>&
@@ -50,10 +50,10 @@ struct BVH_node {
     
 };
 
-inline int random_int(int min, int max, pcg32_state &rng) {
+inline int random_int(int min, int max, curandState &rng) {
     // Returns a random integer in [min,max].
     return static_cast<int>(
-        next_pcg32_real<double>(rng) * (max-min+1)
+        curand_uniform(&rng) * (max-min+1)
     ) + min;
 }
 

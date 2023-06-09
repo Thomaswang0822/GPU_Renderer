@@ -6,8 +6,7 @@
 #include "image.h"
 #include "matrix.h"
 #include "parallel.h"
-#include "pcg.h"
-#include "progressreporter.h"
+#include "CUDA_rand.h"  // replace pcg.h
 #include "timer.h"
 #include "transform.h"
 #include "vector.h"

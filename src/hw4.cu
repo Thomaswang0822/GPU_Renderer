@@ -1,6 +1,21 @@
 #include "hw4.h"
 #include "parse_scene.h"
 
+
+// limited version of checkCudaErrors from helper_cuda.h in CUDA examples
+#define checkCudaErrors(val) check_cuda((val), #val, __FILE__, __LINE__)
+void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line)
+{
+    if (result)
+    {
+        std::cerr << "CUDA error = " << static_cast<unsigned int>(result) << " at " << file << ":" << line << " '" << func << "' \n";
+        // Make sure we call CUDA Device Reset before exiting
+        cudaDeviceReset();
+        exit(99);
+    }
+}
+
+
 Image3 hw_4_1(const std::vector<std::string> &params) {
     // Homework 4.1: diffuse interreflection
     if (params.size() < 1) {
@@ -28,7 +43,7 @@ Image3 hw_4_1(const std::vector<std::string> &params) {
             tick(timer) << " seconds." << std::endl;
 
     // construct BVH tree
-    pcg32_state rng_BVH = init_pcg32();
+    curandState rng_BVH = init_pcg32();
     // DEBUG NOTE: see BVH_node.h
     // std::vector<Shape>& shapes = myScene.shapes;
     std::vector<std::shared_ptr<Shape>> shape_ptrs;
@@ -52,7 +67,11 @@ Image3 hw_4_1(const std::vector<std::string> &params) {
     constexpr int tile_size = 16;
     int num_tiles_x = (img.width + tile_size - 1) / tile_size;
     int num_tiles_y = (img.height + tile_size - 1) / tile_size;
-    ProgressReporter reporter(num_tiles_x * num_tiles_y);
+    
+    // allocate rng for each pixel
+    curandState *rng_array;
+    checkCudaErrors(cudaMallocManaged((void **)&rng_array, nPixels*sizeof(curandState)));
+
     // almost 100% copy from https://github.com/BachiLi/lajolla_public/blob/b8ca4d02e2c7629db672d50a113c9dd04c54c906/src/render.cpp#L80
     parallel_for([&](const Vector2i &tile){
         // use scene.camera
@@ -60,8 +79,8 @@ Image3 hw_4_1(const std::vector<std::string> &params) {
         Real u, v;
         // cannot directly store color now
         Vector3 pixel_color;
-        // setup random geneator; give it unique stream_id
-        pcg32_state rng = init_pcg32(tile[1] * num_tiles_x + tile[0]);
+        // setup CUDA random geneator; give it unique stream_id
+        curandState rng = init_pcg32(tile[1] * num_tiles_x + tile[0]);
         // start and stop indices for each tile
         int x0 = tile[0] * tile_size;
         int x1 = std::min(x0 + tile_size, img.width);
@@ -73,8 +92,8 @@ Image3 hw_4_1(const std::vector<std::string> &params) {
                 pixel_color = {0.0, 0.0, 0.0};
                 for (int s=0; s<spp; ++s) {    
                     // shoot a ray
-                    u = Real(x + next_pcg32_real<Real>(rng)) / (img.width - 1);
-                    v = Real(y + next_pcg32_real<Real>(rng)) / (img.height - 1);
+                    u = Real(x + curand_uniform(&rng)) / (img.width - 1);
+                    v = Real(y + curand_uniform(&rng)) / (img.height - 1);
                     localRay = cam.get_ray(u, v);
                     
                     // CHANGE: call computePixelColor() which deal with hit & no-hit
@@ -84,9 +103,9 @@ Image3 hw_4_1(const std::vector<std::string> &params) {
                 img(x, img.height-1 - y) = pixel_color * inv_spp;
             }
         }
-        reporter.update(1);
+
     }, Vector2i(num_tiles_x, num_tiles_y));
-    reporter.done();
+
     // END: rewrite hw_1_8() code
     std::cout << "Parallel Raytracing takes: " << tick(timer) << " seconds.\n ";
     return img;
@@ -124,7 +143,7 @@ Image3 hw_4_3(const std::vector<std::string> &params) {
             tick(timer) << " seconds." << std::endl;
 
     // construct BVH tree
-    pcg32_state rng_BVH = init_pcg32();
+    curandState rng_BVH = init_pcg32();
     // DEBUG NOTE: see BVH_node.h
     // std::vector<Shape>& shapes = myScene.shapes;
     std::vector<std::shared_ptr<Shape>> shape_ptrs;
@@ -148,7 +167,7 @@ Image3 hw_4_3(const std::vector<std::string> &params) {
     constexpr int tile_size = 16;
     int num_tiles_x = (img.width + tile_size - 1) / tile_size;
     int num_tiles_y = (img.height + tile_size - 1) / tile_size;
-    ProgressReporter reporter(num_tiles_x * num_tiles_y);
+    
     // almost 100% copy from https://github.com/BachiLi/lajolla_public/blob/b8ca4d02e2c7629db672d50a113c9dd04c54c906/src/render.cpp#L80
     parallel_for([&](const Vector2i &tile){
         // use scene.camera
@@ -157,7 +176,7 @@ Image3 hw_4_3(const std::vector<std::string> &params) {
         // cannot directly store color now
         Vector3 pixel_color;
         // setup random geneator; give it unique stream_id
-        pcg32_state rng = init_pcg32(tile[1] * num_tiles_x + tile[0]);
+        curandState rng = init_pcg32(tile[1] * num_tiles_x + tile[0]);
         // start and stop indices for each tile
         int x0 = tile[0] * tile_size;
         int x1 = std::min(x0 + tile_size, img.width);
@@ -169,8 +188,8 @@ Image3 hw_4_3(const std::vector<std::string> &params) {
                 pixel_color = {0.0, 0.0, 0.0};
                 for (int s=0; s<spp; ++s) {    
                     // shoot a ray
-                    u = Real(x + next_pcg32_real<Real>(rng)) / (img.width - 1);
-                    v = Real(y + next_pcg32_real<Real>(rng)) / (img.height - 1);
+                    u = Real(x + curand_uniform(&rng)) / (img.width - 1);
+                    v = Real(y + curand_uniform(&rng)) / (img.height - 1);
                     localRay = cam.get_ray(u, v);
                     
                     // CHANGE: call computePixelColor() which deal with hit & no-hit
@@ -180,9 +199,9 @@ Image3 hw_4_3(const std::vector<std::string> &params) {
                 img(x, img.height-1 - y) = pixel_color * inv_spp;
             }
         }
-        reporter.update(1);
+        
     }, Vector2i(num_tiles_x, num_tiles_y));
-    reporter.done();
+    
     // END: rewrite hw_1_8() code
     std::cout << "Parallel Raytracing takes: " << tick(timer) << " seconds.\n ";
     return img;
@@ -216,7 +235,7 @@ Image3 hw_4_4(const std::vector<std::string> &params) {
             tick(timer) << " seconds." << std::endl;
 
     // construct BVH tree
-    pcg32_state rng_BVH = init_pcg32();
+    curandState rng_BVH = init_pcg32();
     // DEBUG NOTE: see BVH_node.h
     // std::vector<Shape>& shapes = myScene.shapes;
     std::vector<std::shared_ptr<Shape>> shape_ptrs;
@@ -240,7 +259,7 @@ Image3 hw_4_4(const std::vector<std::string> &params) {
     constexpr int tile_size = 16;
     int num_tiles_x = (img.width + tile_size - 1) / tile_size;
     int num_tiles_y = (img.height + tile_size - 1) / tile_size;
-    ProgressReporter reporter(num_tiles_x * num_tiles_y);
+    
     // almost 100% copy from https://github.com/BachiLi/lajolla_public/blob/b8ca4d02e2c7629db672d50a113c9dd04c54c906/src/render.cpp#L80
     parallel_for([&](const Vector2i &tile){
         // use scene.camera
@@ -249,7 +268,7 @@ Image3 hw_4_4(const std::vector<std::string> &params) {
         // cannot directly store color now
         Vector3 pixel_color;
         // setup random geneator; give it unique stream_id
-        pcg32_state rng = init_pcg32(tile[1] * num_tiles_x + tile[0]);
+        curandState rng = init_pcg32(tile[1] * num_tiles_x + tile[0]);
         // start and stop indices for each tile
         int x0 = tile[0] * tile_size;
         int x1 = std::min(x0 + tile_size, img.width);
@@ -261,8 +280,8 @@ Image3 hw_4_4(const std::vector<std::string> &params) {
                 pixel_color = {0.0, 0.0, 0.0};
                 for (int s=0; s<spp; ++s) {    
                     // shoot a ray
-                    u = Real(x + next_pcg32_real<Real>(rng)) / (img.width - 1);
-                    v = Real(y + next_pcg32_real<Real>(rng)) / (img.height - 1);
+                    u = Real(x + curand_uniform(&rng)) / (img.width - 1);
+                    v = Real(y + curand_uniform(&rng)) / (img.height - 1);
                     localRay = cam.get_ray(u, v);
                     
                     // CHANGE: call computePixelColor() which deal with hit & no-hit
@@ -272,9 +291,9 @@ Image3 hw_4_4(const std::vector<std::string> &params) {
                 img(x, img.height-1 - y) = pixel_color * inv_spp;
             }
         }
-        reporter.update(1);
+        
     }, Vector2i(num_tiles_x, num_tiles_y));
-    reporter.done();
+    
     // END: rewrite hw_1_8() code
     std::cout << "Parallel Raytracing takes: " << tick(timer) << " seconds.\n ";
     return img;

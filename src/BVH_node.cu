@@ -10,7 +10,7 @@ BVH_node::BVH_node(shared_ptr<Shape> obj) {
 
 
 BVH_node::BVH_node(std::vector<shared_ptr<Shape>>& objects, Scene& scene,
-                pcg32_state &rng) {
+                curandState &rng) {
     // traverse the entire object by index, build BVH_node 
     // for single sphere or TriangleMesh
     std::vector<std::shared_ptr<BVH_node>> meshBVH;
@@ -79,7 +79,7 @@ BVH_node::BVH_node(std::vector<shared_ptr<Shape>>& objects, Scene& scene,
 
 
 BVH_node::BVH_node(std::vector<std::shared_ptr<Shape>>& objects,
-        size_t start, size_t end, pcg32_state &rng, bool randomAxis)
+        size_t start, size_t end, curandState &rng, bool randomAxis)
 {
     // Timer timer;
     // SHOULD NOT: Create a modifiable array of the source scene objects
